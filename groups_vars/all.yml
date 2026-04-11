@@ -1,0 +1,14 @@
+---
+# Configuration pour le durcissement (Hardening)
+
+# (R30) Valeur du umask par défaut recommandée par l'ANSSI
+system_umask: "0077"
+
+# (R50) Niveau de restriction ptrace (LSM Yama)
+# 1 = restriction aux descendants (recommandé minimal)
+# 2 = uniquement processus privilégiés
+# 3 = désactivation complète
+ptrace_scope: 1
+
+# (R18/R33) Désactivation du compte root en faveur de sudo
+disable_root_account: true

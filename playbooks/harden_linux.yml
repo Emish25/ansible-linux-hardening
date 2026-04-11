@@ -1,0 +1,10 @@
+---
+- name: Hardening GNU/Linux - Guide ANSSI BP-028
+  hosts: all
+  become: true
+  roles:
+    - role: systeme
+    - role: utilisateurs
+    - role: fichiers
+    - role: reseau
+    - role: paquets

@@ -1,0 +1,50 @@
+# ==============================================================================
+# ANSIBLE PRODUCTION INVENTORY EXAMPLE
+# ==============================================================================
+# Renommez ce fichier en 'production.ini' et complétez les informations.
+# Ne jamais commiter le fichier 'production.ini' final contenant des IPs réelles.
+
+[all:vars]
+# Version de Python sur les cibles (souvent nécessaire sur Debian/Ubuntu récents)
+ansible_python_interpreter=/usr/bin/python3
+# Utilisateur de connexion par défaut
+ansible_user=admin_user
+
+# ------------------------------------------------------------------------------
+# GROUPES DE SERVEURS
+# ------------------------------------------------------------------------------
+
+[webservers]
+# Format : nom_host ansible_host=IP_OU_FQDN
+web-prod-01 ansible_host=192.168.1.10
+web-prod-02 ansible_host=192.168.1.11
+
+[dbservers]
+db-prod-01 ansible_host=192.168.1.20
+
+[audit_targets]
+# Groupe spécifique pour tes rapports d'audit ANSSI
+vm-debian-prod ansible_host=10.0.0.50
+vm-ubuntu-prod ansible_host=10.0.0.51
+
+# ------------------------------------------------------------------------------
+# MÉTRO-GROUPES (Enfants)
+# ------------------------------------------------------------------------------
+
+[production:children]
+webservers
+dbservers
+audit_targets
+
+# ------------------------------------------------------------------------------
+# VARIABLES SPÉCIFIQUES PAR GROUPE
+# ------------------------------------------------------------------------------
+
+[production:vars]
+# Variable pour ton rôle d'audit
+env_type=production
+is_hardened=true
+
+# Configuration SSH (Optionnel)
+# ansible_ssh_private_key_file=~/.ssh/id_rsa_prod
+# ansible_ssh_common_args='-o ProxyCommand="..."'

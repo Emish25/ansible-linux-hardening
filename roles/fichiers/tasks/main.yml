@@ -1,0 +1,72 @@
+---
+# ==========================================
+# Niveau Minimal (Tags: minimal)
+# ==========================================
+
+- name: (R30) Configurer le umask par défaut (login.defs)
+  ansible.builtin.lineinfile:
+    path: /etc/login.defs
+    regexp: '^UMASK\s+'
+    line: 'UMASK           027'
+    state: present
+  tags: minimal
+
+- name: (R30) Forcer le umask restrictif dans les sessions Shell
+  ansible.builtin.copy:
+    dest: /etc/profile.d/umask.sh
+    content: |
+      # Recommandation ANSSI : umask restrictif
+      umask 027
+    mode: '0644'
+    owner: root
+    group: root
+  tags: minimal
+
+# ==========================================
+# Niveau Intermédiaire (Tags: intermediaire)
+# ==========================================
+
+- name: (R31) Protéger les fichiers d'authentification sensibles
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    owner: root
+    group: "{{ item.group }}"
+    mode: "{{ item.mode }}"
+  loop:
+    - { path: '/etc/passwd', mode: '0644', group: 'root' }
+    - { path: '/etc/shadow', mode: '0640', group: 'shadow' } 
+  tags: intermediaire
+
+- name: (R51) Activer la protection des liens (symlinks, hardlinks, fifos)
+  ansible.posix.sysctl:
+    name: "{{ item.name }}"
+    value: "{{ item.value }}"
+    sysctl_set: yes
+    state: present
+    reload: yes
+  loop:
+    - { name: 'fs.protected_symlinks', value: '1' }
+    - { name: 'fs.protected_hardlinks', value: '1' }
+    - { name: 'fs.protected_fifos', value: '1' }
+    - { name: 'fs.protected_regular', value: '2' }
+  tags: intermediaire
+
+- name: (R34) S'assurer que le sticky bit est présent sur les répertoires temporaires
+  ansible.builtin.file:
+    path: "{{ item }}"
+    # Le mode 1777 donne tous les droits (777) MAIS active le sticky bit (1) : 
+    # seul le propriétaire d'un fichier peut le supprimer.
+    mode: '1777' 
+  loop:
+    - /tmp
+    - /var/tmp
+  tags: intermediaire
+
+- name: (R12) Durcir le partitionnement en mémoire partagée (/dev/shm)
+  ansible.posix.mount:
+    path: /dev/shm
+    src: tmpfs
+    fstype: tmpfs
+    opts: defaults,nodev,nosuid,noexec
+    state: mounted
+  tags: intermediaire

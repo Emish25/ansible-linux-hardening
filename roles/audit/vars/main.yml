@@ -1,0 +1,116 @@
+---
+audit_items:
+  # ==========================================
+  # SYSTÈME & NOYAU (Rôle : systeme)
+  # ==========================================
+  - name: "[SYS] ASLR (randomize_va_space)"
+    check_cmd: "cat /proc/sys/kernel/randomize_va_space"
+    expected: "2"
+    desc: "Mémoire imprévisible (ASLR) activée."
+
+  - name: "[SYS] Buffer dmesg restreint"
+    check_cmd: "cat /proc/sys/kernel/dmesg_restrict"
+    expected: "1"
+    desc: "Empêche les utilisateurs de lire les logs kernel."
+
+  - name: "[SYS] Masquage adresses noyau (kptr_restrict)"
+    check_cmd: "cat /proc/sys/kernel/kptr_restrict"
+    expected: "2"
+    desc: "Cache les adresses mémoire du noyau."
+
+  - name: "[SYS] Restriction PTRACE (Yama)"
+    check_cmd: "cat /proc/sys/kernel/yama/ptrace_scope"
+    expected: "1"
+    desc: "Empêche l'espionnage entre processus locaux."
+
+  - name: "[SYS] BPF non privilégié désactivé"
+    check_cmd: "cat /proc/sys/kernel/unprivileged_bpf_disabled"
+    expected: "1"
+    desc: "Restreint l'usage réseau bas niveau aux admins."
+
+  # ==========================================
+  # UTILISATEURS & AUTH (Rôle : users)
+  # ==========================================
+  - name: "[USR] Compte root verrouillé"
+    check_cmd: "grep '^root:' /etc/shadow | cut -d: -f2 | grep -q '^[!*]' && echo OK || echo KO"
+    expected: "OK"
+    desc: "Le mot de passe root est désactivé (imputabilité sudo)."
+
+  - name: "[USR] Shell du compte daemon"
+    check_cmd: "getent passwd daemon | cut -d: -f7"
+    expected: "/usr/sbin/nologin"
+    desc: "Désactivation de la connexion pour le compte de service daemon."
+
+  - name: "[USR] Expiration des sessions (TMOUT)"
+    check_cmd: "grep -q 'TMOUT=900' /etc/profile.d/tmout.sh && echo OK || echo KO"
+    expected: "OK"
+    desc: "Déconnexion automatique après 15 minutes d'inactivité."
+
+  # ==========================================
+  # FICHIERS & SYSTÈME DE FICHIERS (Rôle : fichiers)
+  # ==========================================
+  - name: "[FIC] Umask Global"
+    check_cmd: "grep '^UMASK' /etc/login.defs | grep -v '^#' | awk '{print $2}'"
+    expected: "027"
+    desc: "Fichiers inaccessibles aux autres utilisateurs par défaut."
+
+  - name: "[FIC] Droits sur /etc/shadow"
+    check_cmd: "stat -c '%a %U %G' /etc/shadow"
+    expected: "640 root shadow"
+    desc: "Fichier de mots de passe protégé en lecture."
+
+  - name: "[FIC] Protection liens symboliques"
+    check_cmd: "cat /proc/sys/fs/protected_symlinks"
+    expected: "1"
+    desc: "Prévention contre les attaques par liens dans /tmp."
+
+  - name: "[FIC] Sticky bit sur /tmp"
+    check_cmd: "stat -c '%a' /tmp"
+    expected: "1777"
+    desc: "Seul le propriétaire peut supprimer son fichier dans /tmp."
+
+  - name: "[FIC] /dev/shm (noexec)"
+    check_cmd: "mount | grep /dev/shm | grep -q noexec && echo OK || echo KO"
+    expected: "OK"
+    desc: "Interdiction d'exécuter des scripts en mémoire RAM."
+
+  # ==========================================
+  # RÉSEAU & PARE-FEU (Rôle : reseau)
+  # ==========================================
+  - name: "[NET] Désactivation IPv6"
+    check_cmd: "cat /proc/sys/net/ipv6/conf/all/disable_ipv6"
+    expected: "1"
+    desc: "Surface d'attaque IPv6 fermée."
+
+  - name: "[NET] Anti-spoofing (rp_filter)"
+    check_cmd: "cat /proc/sys/net/ipv4/conf/all/rp_filter"
+    expected: "1"
+    desc: "Vérification stricte de l'origine des paquets IP."
+
+  - name: "[NET] Accès Root SSH"
+    check_cmd: "sshd -T | grep -i '^permitrootlogin ' | awk '{print $2}'"
+    expected: "no"
+    desc: "Connexion SSH en tant que root interdite."
+
+  - name: "[NET] Statut Pare-feu UFW"
+    check_cmd: "ufw status | grep -i '^Status:' | awk '{print $2}'"
+    expected: "active"
+    desc: "Pare-feu UFW allumé."
+
+  # ==========================================
+  # PAQUETS & MISES À JOUR (Rôle : paquets)
+  # ==========================================
+  - name: "[PKG] Paquet vulnérable (nis) absent"
+    check_cmd: "dpkg -l nis 2>/dev/null | grep -q '^ii' && echo KO || echo OK"
+    expected: "OK"
+    desc: "Le service obsolète NIS n'est pas installé."
+
+  - name: "[PKG] Outils auto-upgrades présents"
+    check_cmd: "dpkg-query -W -f='${Status}' unattended-upgrades 2>/dev/null | awk '{print $3}'"
+    expected: "installed"
+    desc: "Le gestionnaire de mises à jour de sécurité est installé."
+
+  - name: "[PKG] Correctifs de sécurité automatisés"
+    check_cmd: "grep -q 'APT::Periodic::Unattended-Upgrade \"1\"' /etc/apt/apt.conf.d/20auto-upgrades && echo OK || echo KO"
+    expected: "OK"
+    desc: "Téléchargement et installation automatique des patchs APT."

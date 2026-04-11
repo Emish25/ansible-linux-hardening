@@ -1,0 +1,91 @@
+---
+# ==========================================
+# Niveau Minimal (Tags: minimal)
+# ==========================================
+
+- name: (R35) S'assurer que les services réseau obsolètes sont absents
+  ansible.builtin.package:
+    name: "{{ item }}"
+    state: absent
+  loop:
+    - telnetd
+    - rsh-server
+    - rsh-client
+    - inetutils-ftp
+    - tftpd
+  tags: minimal
+
+# ==========================================
+# Niveau Intermédiaire (Tags: intermediaire)
+# ==========================================
+
+- name: (R52) Désactiver IPv6 (Sysctl)
+  ansible.posix.sysctl:
+    name: "{{ item }}"
+    value: '1'
+    sysctl_set: yes
+    state: present
+    reload: yes
+  loop:
+    - net.ipv6.conf.all.disable_ipv6
+    - net.ipv6.conf.default.disable_ipv6
+    - net.ipv6.conf.lo.disable_ipv6
+  tags: intermediaire
+
+- name: (R22) Durcir la pile réseau IPv4 (Sysctl)
+  ansible.posix.sysctl:
+    name: "{{ item.name }}"
+    value: "{{ item.value }}"
+    sysctl_set: yes
+    state: present
+    reload: yes
+  loop:
+    # Activer la vérification de l'adresse source (protection anti-spoofing)
+    - { name: 'net.ipv4.conf.all.rp_filter', value: '1' }
+    - { name: 'net.ipv4.conf.default.rp_filter', value: '1' }
+    # Ignorer les paquets ICMP redirect (protection anti-routage malveillant)
+    - { name: 'net.ipv4.conf.all.accept_redirects', value: '0' }
+    - { name: 'net.ipv4.conf.default.accept_redirects', value: '0' }
+    # Ne pas envoyer de paquets ICMP redirect
+    - { name: 'net.ipv4.conf.all.send_redirects', value: '0' }
+    - { name: 'net.ipv4.conf.default.send_redirects', value: '0' }
+    # Refuser le source routing
+    - { name: 'net.ipv4.conf.all.accept_source_route', value: '0' }
+    - { name: 'net.ipv4.conf.default.accept_source_route', value: '0' }
+    # Journaliser les paquets suspects (Martians)
+    - { name: 'net.ipv4.conf.all.log_martians', value: '1' }
+  tags: intermediaire
+
+- name: (R21) Durcir la configuration du service SSH (sshd_config)
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+    validate: '/usr/sbin/sshd -t -f %s'
+  loop:
+    - { regexp: '^#?PermitRootLogin', line: 'PermitRootLogin no' }
+    - { regexp: '^#?X11Forwarding', line: 'X11Forwarding no' }
+    - { regexp: '^#?MaxAuthTries', line: 'MaxAuthTries 4' }
+    - { regexp: '^#?PermitEmptyPasswords', line: 'PermitEmptyPasswords no' }
+  notify: Redémarrer SSH
+  tags: intermediaire
+
+- name: (R44) S'assurer que le pare-feu UFW est installé
+  ansible.builtin.package:
+    name: ufw
+    state: present
+  tags: intermediaire
+
+- name: (R44) Configuration UFW - AUTORISER SSH (Critique pour ne pas s'enfermer dehors)
+  community.general.ufw:
+    rule: allow
+    port: '22'
+    proto: tcp
+  tags: intermediaire
+
+- name: (R44) Configuration UFW - Activer le pare-feu et refuser tout le reste en entrée
+  community.general.ufw:
+    state: enabled
+    direction: incoming
+    policy: deny
+  tags: intermediaire

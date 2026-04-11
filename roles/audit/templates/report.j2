@@ -1,0 +1,41 @@
+# 🛡️ Rapport d'Audit de Sécurité
+> **Guide de référence :** ANSSI BP-028
+> **Généré le :** {{ ansible_facts['date_time']['iso8601'] }}
+
+## 📊 Résumé de la Conformité
+
+| Paramètre | Valeur |
+| :--- | :--- |
+| **Machine** | `{{ inventory_hostname }}` |
+| **OS** | {{ ansible_facts['distribution'] }} {{ ansible_facts['distribution_version'] }} |
+| **Score Final** | # {{ audit_score }} % |
+
+---
+
+## 📝 Détails des points de contrôle
+
+| Statut | Point de Contrôle | Valeur Réelle | Attendu |
+| :---: | :--- | :---: | :---: |
+{% for result in audit_results %}
+| {{ '✅' if result.status else '❌' }} | **{{ result.name }}** | `{{ result.actual | default('Vide') }}` | `{{ result.expected }}` |
+{% endfor %}
+
+---
+
+## 🔍 Analyse détaillée par point
+
+{% for result in audit_results %}
+### {{ '✅' if result.status else '❌' }} {{ result.name }}
+- **Description :** {{ result.desc }}
+- **Résultat obtenu :** `{{ result.actual }}`
+- **Conformité :** {{ 'Conforme' if result.status else 'NON CONFORME' }}
+
+{% if not result.status %}
+> [!CAUTION]
+> **Action corrective requise :** La valeur actuelle ne correspond pas aux préconisations du guide de durcissement.
+{% endif %}
+
+---
+{% endfor %}
+
+_Rapport généré automatiquement par Ansible_

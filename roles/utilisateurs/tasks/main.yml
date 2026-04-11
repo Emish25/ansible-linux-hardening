@@ -1,0 +1,96 @@
+---
+# ==========================================
+# Niveau Minimal (Tags: minimal)
+# ==========================================
+
+- name: (R18) Verrouiller le mot de passe du compte root (Imputabilité)
+  ansible.builtin.user:
+    name: root
+    password_lock: yes
+  when: disable_root_account | default(true)
+  tags:
+    - minimal
+
+- name: (R26) Désactiver le shell des comptes de service standards
+  ansible.builtin.user:
+    name: "{{ item }}"
+    shell: /usr/sbin/nologin
+  loop: 
+    - bin
+    - sys
+    - daemon
+    - games
+    - ftp
+    - sync
+    - adm
+    - lp
+    - mail
+    - nobody
+  ignore_errors: true  # On ignore si certains comptes n'existent pas sur la distribution
+  tags:
+    - minimal
+
+# ==========================================
+# Niveau Intermédiaire (Tags: intermediaire)
+# ==========================================
+
+- name: (R27) Configurer l'expiration des sessions inactives (TMOUT)
+  ansible.builtin.copy:
+    dest: /etc/profile.d/tmout.sh
+    content: |
+      # Déconnexion automatique après 15 minutes (900 secondes) d'inactivité
+      readonly TMOUT=900
+      export TMOUT
+    mode: '0644'
+    owner: root
+    group: root
+  tags:
+    - intermediaire
+
+- name: (R41) Configurer les directives de sécurité par défaut de sudo (ANSSI R39)
+  ansible.builtin.copy:
+    dest: /etc/sudoers.d/99-anssi-hardening
+    content: |
+      # Directives ANSSI : requiretty, use_pty, umask=0077, ignore_dot, env_reset
+      # (noexec a été retiré pour permettre le fonctionnement d'Ansible)
+      Defaults requiretty, use_pty, umask=0077
+      Defaults ignore_dot, env_reset
+    mode: '0440'
+    owner: root
+    group: root
+    validate: 'visudo -cf %s'
+  tags:
+    - intermediaire
+
+- name: (R28) Installer le module PAM pour la robustesse des mots de passe (pwquality)
+  ansible.builtin.package:
+    name: libpam-pwquality
+    state: present
+  tags:
+    - intermediaire
+
+- name: (R28) Configurer la robustesse des mots de passe via pwquality.conf
+  ansible.builtin.copy:
+    dest: /etc/security/pwquality.conf
+    content: |
+      # Configuration ANSSI - Robustesse des mots de passe
+      
+      # Longueur minimale du mot de passe (14 caractères recommandés)
+      minlen = 14
+      
+      # Nombre minimum de classes de caractères requises (Maj, Min, Chiffres, Spéciaux)
+      minclass = 4
+      
+      # Nombre de tentatives autorisées avant de rejeter
+      retry = 3
+      
+      # Forcer l'application de ces règles même pour l'utilisateur root
+      enforce_for_root
+     
+      # Rejeter les mots de passe qui contiennent le nom d'utilisateur
+      usercheck = 1
+    mode: '0644'
+    owner: root
+    group: root
+  tags:
+    - intermediaire

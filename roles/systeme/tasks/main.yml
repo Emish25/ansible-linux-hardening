@@ -1,0 +1,85 @@
+---
+# ==========================================
+# Niveau Minimal (Tags: minimal)
+# ==========================================
+
+- name: (R46) Activer l'ASLR
+  ansible.posix.sysctl:
+    name: kernel.randomize_va_space
+    value: '2'
+    sysctl_set: true
+    state: present
+    reload: true
+  tags:
+    - minimal
+
+- name: (R48) Désactiver la création de coredump pour les exécutables setuid
+  ansible.posix.sysctl:
+    name: fs.suid_dumpable
+    value: '0'
+    sysctl_set: true
+    state: present
+    reload: true
+  tags:
+    - minimal
+
+# ==========================================
+# Niveau Intermédiaire (Tags: intermediaire)
+# ==========================================
+
+- name: (R23) Restreindre l'accès au buffer dmesg
+  ansible.posix.sysctl:
+    name: kernel.dmesg_restrict
+    value: '1'
+    sysctl_set: true
+    state: present
+    reload: true
+  tags:
+    - intermediaire
+
+- name: (R47) Masquer les adresses kernel (kptr_restrict)
+  ansible.posix.sysctl:
+    name: kernel.kptr_restrict
+    value: '2'
+    sysctl_set: true
+    state: present
+    reload: true
+  tags:
+    - intermediaire
+
+- name: (R49) Restreindre l'usage du BPF aux utilisateurs privilégiés
+  ansible.posix.sysctl:
+    name: kernel.unprivileged_bpf_disabled
+    value: '1'
+    sysctl_set: true
+    state: present
+    reload: true
+  tags:
+    - intermediaire
+
+- name: (R50) Restreindre l'usage de ptrace via le module Yama
+  ansible.posix.sysctl:
+    name: kernel.yama.ptrace_scope
+    # La valeur 1 restreint le ptrace aux processus descendants. 
+    # Pour un durcissement encore plus fort, on peut passer à 2 ou 3.
+    value: '1' 
+    sysctl_set: true
+    state: present
+    reload: true
+  tags:
+    - intermediaire
+
+- name: (R36) S'assurer que le paquet rsyslog est installé
+  ansible.builtin.package:
+    name: rsyslog
+    state: present
+  tags:
+    - intermediaire
+
+- name: (R36) Démarrer et activer le service rsyslog
+  ansible.builtin.service:
+    name: rsyslog
+    state: started
+    enabled: true
+  tags:
+    - intermediaire

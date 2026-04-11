@@ -1,0 +1,47 @@
+---
+# ==========================================
+# Niveau Minimal (Tags: minimal)
+# ==========================================
+
+- name: (R8) Mettre à jour le cache APT et tous les paquets du système
+  ansible.builtin.apt:
+    update_cache: yes
+    upgrade: safe
+  tags: minimal
+
+- name: (R1/R14) Supprimer les paquets non essentiels et potentiellement vulnérables
+  ansible.builtin.apt:
+    name: "{{ item }}"
+    state: absent
+    purge: yes
+    autoremove: yes # Nettoie automatiquement les dépendances orphelines
+  loop:
+    - nis            # Protocole d'annuaire obsolète et non sécurisé
+    - xinetd         # Super-démon souvent inutile sur un serveur moderne
+    - rpcbind        # Risqué si NFS n'est pas utilisé
+    - avahi-daemon   # Découverte réseau (Bonjour/Zeroconf), très bavard et inutile sur serveur
+  tags: minimal
+
+# ==========================================
+# Niveau Intermédiaire (Tags: intermediaire)
+# ==========================================
+
+- name: (R8) Installer les outils de mises à jour automatiques de sécurité
+  ansible.builtin.apt:
+    name:
+      - unattended-upgrades
+      - apt-listchanges
+    state: present
+  tags: intermediaire
+
+- name: (R8) Activer le téléchargement et l'installation automatiques (APT)
+  ansible.builtin.copy:
+    dest: /etc/apt/apt.conf.d/20auto-upgrades
+    content: |
+      # Recommandation ANSSI : Automatiser au moins l'application des correctifs de sécurité
+      APT::Periodic::Update-Package-Lists "1";
+      APT::Periodic::Unattended-Upgrade "1";
+    mode: '0644'
+    owner: root
+    group: root
+  tags: intermediaire
