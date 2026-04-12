@@ -107,7 +107,7 @@ ansible-playbook -i inventories/your-inventories.ini playbooks/harden_linux.yml 
 Les rapports sont générés automatiquement dans le dossier `reports/` après chaque exécution d'audit.
 
 > [!TIP]
-> Le rapport est au format Markdown, ce qui permet une lecture parfaite directement sur GitHub ou avec un éditeur comme Obsidian.
+> Le rapport est au format Markdown, ce qui permet une lecture parfaite directement sur GitHub ou avec votre éditeur préféré.
 
 **Aperçu du rendu :**
 
