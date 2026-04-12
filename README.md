@@ -39,14 +39,12 @@
 
 ## ✅ Points de contrôle (Audit)
 
-Le rôle d'audit vérifie plusieurs points critiques selon le référentiel ANSSI BP-028 :
+Des rapports d'audit réels générés sur des machines de test sont disponibles dans le dossier [`playbooks/reports/`](playbooks/reports/) :
 
-| Référence | Description |
-|---|---|
-| **R46** | Activation de l'ASLR |
-| **R12** | Durcissement de la mémoire partagée |
-| **SSH** | Désactivation du login root, renforcement des protocoles sécurisés |
-| **MAJ** | Présence des correctifs de sécurité |
+- 🟢 [`audit_vm-debian_2026-04-11_freshinstall.md`](playbooks/reports/audit_vm-debian_2026-04-11_freshinstall.md) — Debian, état initial (fresh install)
+- 🔵 [`audit_vm-debian_2026-04-11_afterplaybook.md`](playbooks/reports/audit_vm-debian_2026-04-11_afterplaybook.md) — Debian, après application du playbook
+- 🟢 [`audit_vm-ubuntu_2026-04-11_freshinstall.md`](playbooks/reports/audit_vm-ubuntu_2026-04-11_freshinstall.md) — Ubuntu, état initial (fresh install)
+- 🔵 [`audit_vm-ubuntu_2026-04-11_after-playbook.md`](playbooks/reports/audit_vm-ubuntu_2026-04-11_after-playbook.md) — Ubuntu, après application du playbook
 
 ---
 
