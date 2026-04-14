@@ -1,10 +1,10 @@
 ---
 - name: Audit de conformité ANSSI BP-028
-   hosts: all
-   become: yes
-   become_method: sudo
-   become_user: root
-   become_flags: '-H'
+  hosts: all
+  become: yes
+  become_method: sudo
+  become_user: root
+  become_flags: '-H'
 
   vars:
     ansible_remote_tmp: /tmp/.ansible
