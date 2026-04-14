@@ -1,7 +1,18 @@
 ---
 
 - name: Audit de conformité ANSSI BP-028
-  hosts: all
-  become: true
+   hosts: all
+   become: yes
+   become_method: sudo
+   become_user: root
+   become_flags: '-H'
+
+  vars:
+    ansible_remote_tmp: /tmp/.ansible
+
+  environment:
+    ANSIBLE_REMOTE_TEMP: /tmp/.ansible
+    ANSIBLE_HOST_KEY_CHECKING: "False"
+
   roles:
     - role: audit
