@@ -61,12 +61,3 @@
     - /tmp
     - /var/tmp
   tags: intermediaire
-
-- name: (R12) Durcir le partitionnement en mémoire partagée (/dev/shm)
-  ansible.posix.mount:
-    path: /dev/shm
-    src: tmpfs
-    fstype: tmpfs
-    opts: defaults,nodev,nosuid,noexec
-    state: mounted
-  tags: intermediaire
