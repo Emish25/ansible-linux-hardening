@@ -7,20 +7,24 @@
   ansible.builtin.lineinfile:
     path: /etc/login.defs
     regexp: '^UMASK\s+'
-    line: 'UMASK           {{ system_umask }}'
+    line: 'UMASK           027'
     state: present
-  tags: minimal
+    backup: true
+  tags:
+    - minimal
 
 - name: (R30) Forcer le umask restrictif dans les sessions Shell
   ansible.builtin.copy:
     dest: /etc/profile.d/umask.sh
     content: |
       # Recommandation ANSSI : umask restrictif
-      umask {{ system_umask }}
+      umask 027
     mode: '0644'
     owner: root
     group: root
-  tags: minimal
+  tags:
+    - minimal
+
 
 # ==========================================
 # Niveau Intermédiaire (Tags: intermediaire)
@@ -35,7 +39,8 @@
   loop:
     - { path: '/etc/passwd', mode: '0644', group: 'root' }
     - { path: '/etc/shadow', mode: '0640', group: 'shadow' }
-  tags: intermediaire
+  tags:
+    - intermediaire
 
 - name: (R51) Activer la protection des liens (symlinks, hardlinks, fifos)
   ansible.posix.sysctl:
@@ -49,15 +54,16 @@
     - { name: 'fs.protected_hardlinks', value: '1' }
     - { name: 'fs.protected_fifos', value: '1' }
     - { name: 'fs.protected_regular', value: '2' }
-  tags: intermediaire
+  tags:
+    - intermediaire
 
 - name: (R34) S'assurer que le sticky bit est présent sur les répertoires temporaires
   ansible.builtin.file:
     path: "{{ item }}"
-    # Le mode 1777 donne tous les droits (777) MAIS active le sticky bit (1) :
-    # seul le propriétaire d'un fichier peut le supprimer.
+    state: directory
     mode: '1777'
   loop:
     - /tmp
     - /var/tmp
-  tags: intermediaire
+  tags:
+    - intermediaire
