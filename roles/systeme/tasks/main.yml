@@ -23,6 +23,7 @@
   tags:
     - minimal
 
+
 # ==========================================
 # Niveau Intermédiaire (Tags: intermediaire)
 # ==========================================
@@ -60,9 +61,7 @@
 - name: (R50) Restreindre l'usage de ptrace via le module Yama
   ansible.posix.sysctl:
     name: kernel.yama.ptrace_scope
-    # La valeur 1 restreint le ptrace aux processus descendants.
-    # Pour un durcissement encore plus fort, on peut passer à 2 ou 3.
-    value: '{{ ptrace_scope }}'
+    value: '1'
     sysctl_set: true
     state: present
     reload: true
